@@ -9,7 +9,7 @@
 #define DB_PATH_LEN 32
 static uint8_t db_path[DB_PATH_LEN] = { 0 };
 
-static uint32_t get_value(uint8_t * key, uint8_t * val, uint8_t * type)
+static uint32_t get_value(uint8_t* tbl, uint8_t * key, uint8_t * val, uint8_t * type)
 {
 	uint32_t size = 0;
 	int ecode = 0;
@@ -88,7 +88,7 @@ static void init(void)
 	}
 }
 
-static uint8_t get_boolean(uint8_t * key)
+static uint8_t get_boolean(uint8_t* tbl, uint8_t * key)
 {
 	uint8_t val = 0;
 	uint32_t size = 0;
@@ -100,12 +100,12 @@ static uint8_t get_boolean(uint8_t * key)
 	return val;
 }
 
-static void set_boolean(uint8_t * key, uint8_t val)
+static void set_boolean(uint8_t* tbl, uint8_t * key, uint8_t val)
 {
 	set_value(key, &val, DB_DATATYPE_BOOLEAN);
 }
 
-static uint32_t get_uint32(uint8_t * key)
+static uint32_t get_uint32(uint8_t* tbl, uint8_t * key)
 {
 	uint32_t val = 0;
 	uint32_t size = 0;
@@ -117,19 +117,19 @@ static uint32_t get_uint32(uint8_t * key)
 	return val;
 }
 
-static void set_uint32(uint8_t * key, uint32_t val)
+static void set_uint32(uint8_t* tbl, uint8_t * key, uint32_t val)
 {
 	set_value(key, (uint8_t *) & val, DB_DATATYPE_UINT32);
 }
 
-static uint32_t get_string(uint8_t * key, uint8_t * val)
+static uint32_t get_string(uint8_t* tbl, uint8_t * key, uint8_t * val)
 {
 	uint32_t size = 0;
 	size = get_value(key, val, DB_DATATYPE_STRING);
 	return size;
 }
 
-static void set_string(uint8_t * key, uint8_t * val)
+static void set_string(uint8_t* tbl, uint8_t * key, uint8_t * val)
 {
 	set_value(key, val, DB_DATATYPE_STRING);
 }

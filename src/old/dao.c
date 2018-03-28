@@ -1,21 +1,8 @@
-#include <sys/socket.h>
-#include <sys/epoll.h>
-#include <signal.h>
-#include <assert.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/un.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <syslog.h>
-
-#include "ops_misc.h"
+#include "ops_mq.h"
+#include "ops_cmd.h"
 #include "ops_log.h"
 #include "ops_json.h"
-#include "ops_db.h"
+#include "dao.h"
 
 #define DAO_KV_MAX      128
 
@@ -46,13 +33,19 @@ struct dao_kv_512_t {
 };
 
 static struct dao_kv_512_t dao_kv_list[DAO_KV_MAX];
-
-static uint16_t get_dao_val(uint8_t* key, uint8_t* val)
+#if 1
+uint8_t CMD(dao_get)(uint8_t* req_data, uint8_t* res_data)
 {
 	struct ops_log_t* log = get_log_instance();
+	struct ops_json_t* json = get_json_instance();
+	json_reader_t* reader = json->create_json_reader(req_data);
+	uint8_t* key = NULL;
+	//uint8_t* val = NULL;
 	int i = 0;
 	uint16_t val_size = 0;
 	struct dao_kv_512_t* kv = NULL;
+	log->debug(0x1, "dao get: %s\n", req_data);
+	key = json->get_json_string(reader, KV_KEY, "");
 	for(i=0;i<DAO_KV_MAX;i++) {
 		kv = &dao_kv_list[i];
 		if((kv->hdr.type & 0x0F) == DAOTYPE_UNKNOWN) {
@@ -61,27 +54,32 @@ static uint16_t get_dao_val(uint8_t* key, uint8_t* val)
 		} else if((kv->hdr.type & 0x0F) == DAOTYPE_JSON_512) {
 			log->debug(0x01, "record used: %s\n", key);
 			if((strlen(key) == kv->hdr.key_len) && (memcmp(key, &kv->data[0], kv->hdr.key_len) == 0)) {
-				memcpy(val, &kv->data[kv->hdr.key_len], kv->hdr.val_len);
-				val_size = kv->hdr.val_len;
-				log->debug(0x01, "record copied %s, %s\n", key, val);
+				memcpy(res_data, &kv->data[kv->hdr.key_len], kv->hdr.val_len);
+				log->debug(0x01, "record copied %s, %s\n", key, res_data);
 				break;
 			}
 		} else {
 			log->debug(0x01, "key: not found\n");
 		}
 	}
-	log->debug(0x01, "key: %s, val[%d]: %s\n", key, val_size, val);
-	return val_size;
+	log->debug(0x01, "key: %s, val[%d]: %s\n", key, val_size, res_data);
+	return CMD_STATUS_NORMAL;
 }
 
-static uint16_t set_dao_val(uint8_t* key, uint8_t* val)
+uint8_t CMD(dao_set)(uint8_t* req_data, uint8_t* res_data)
 {
 	struct ops_log_t* log = get_log_instance();
-	uint16_t val_size = 0;
+	struct ops_json_t* json = get_json_instance();
+	json_reader_t* reader = json->create_json_reader(req_data);
+	uint8_t* key = NULL;
+	uint8_t* val = NULL;
 	int i = 0;
 	struct dao_kv_512_t* kv = NULL;
-	log->debug(0x1, "%s-key: %s\n", __func__, key);
-	log->debug(0x1, "%s-val: %s\n", __func__, val);
+	log->debug(0x1, "dao set: %s\n", req_data);
+	key = json->get_json_string(reader, KV_KEY, "");
+	val = json->get_json_string(reader, KV_VAL, "");
+	log->debug(0x1, "%s-key: %s\n", KV_KEY, key);
+	log->debug(0x1, "%s-val: %s\n", KV_VAL, val);
 	for(i=0;i<DAO_KV_MAX;i++) {
 		kv = &dao_kv_list[i];
 		if((kv->hdr.type & 0x0F) == DAOTYPE_JSON_512) {
@@ -90,7 +88,6 @@ static uint16_t set_dao_val(uint8_t* key, uint8_t* val)
 				memset(&kv->data[kv->hdr.key_len], 0, kv->hdr.val_len);
 				kv->hdr.val_len = strlen(val);
 				memcpy(&kv->data[kv->hdr.key_len], val, kv->hdr.val_len);
-				val_size = kv->hdr.val_len;
 				break;
 			}
 			continue;
@@ -100,14 +97,15 @@ static uint16_t set_dao_val(uint8_t* key, uint8_t* val)
 			kv->hdr.val_len = strlen(val);
 			memcpy(&kv->data[0], key, kv->hdr.key_len);
 			memcpy(&kv->data[kv->hdr.key_len], val, kv->hdr.val_len);
-			val_size = kv->hdr.val_len;
 			break;
 		}
 	}
-	return val_size;
+	//strcpy(res_data, req_data);
+	strcpy(res_data, "{\"dbstatus\":\"good\"}");
+	return CMD_STATUS_NORMAL;
 }
-
-static void init(void)
+#endif
+void init_dao()
 {
 	int i = 0;
 	int idx = 0;
@@ -291,7 +289,7 @@ static void init(void)
 /*
 #define VAL_DRBD "{\"enabled\":0, \"ipaddress_local\":\"\", \"macaddress_local\":\"\", \"hostname_local\":\"qemu1\", \"drbd_local\":\"/dev/drbd0\", \"disk_local\":\"/dev/sdb\", \"hostname_remote\":\"qemu2\", \"drbd_remote\":\"/dev/drbd0\", \"disk_remote\":\"/dev/sdb\", \"ipaddress_remote\":\"\", \"macaddress_remote\":\"\"}"
 */
-#define VAL_DRBD "{\"ipaddress_local\":\"\", \"macaddress_local\":\"\", \"hostname_local\":\"qemu1\", \"drbd_local\":\"/dev/drbd0\", \"disk_local\":\"/dev/sdb\", \"hostname_remote\":\"qemu2\", \"drbd_remote\":\"/dev/drbd0\", \"disk_remote\":\"/dev/sdb\", \"ipaddress_remote\":\"\", \"macaddress_remote\":\"\"}"
+#define VAL_DRBD "{\"enabled\":0, \"ipaddress_local\":\"\", \"macaddress_local\":\"\", \"hostname_local\":\"qemu1\", \"drbd_local\":\"/dev/drbd0\", \"disk_local\":\"/dev/sdb\", \"hostname_remote\":\"qemu2\", \"drbd_remote\":\"/dev/drbd0\", \"disk_remote\":\"/dev/sdb\", \"ipaddress_remote\":\"\", \"macaddress_remote\":\"\"}"
 	kv = &dao_kv_list[idx++];
 	kv->hdr.chksum = 0;
 	kv->hdr.type |= DAOTYPE_JSON_512;
@@ -302,27 +300,43 @@ static void init(void)
 	strcpy(&kv->data[kv->hdr.key_len], VAL_DRBD);
 	}
 }
+#if 1
+static struct cmd_processor_t processor_list[] = {
+	{ CMD_FN_1,	CMD_NO_1,	CMD(dao_get) },
+	{ CMD_FN_1,	CMD_NO_2,	CMD(dao_set) },
+	{ CMD_FN_RSVD,	CMD_NO_RSVD,	NULL }
+};
 
-static void show_all(void)
+uint8_t process_dao(struct msg_t* req, struct msg_t* res)
 {
-}
-
-static struct ops_db_t *obj = NULL;
-struct ops_db_t *get_db_instance()
-{
-	if (!obj) {
-		obj = malloc(sizeof(struct ops_db_t));
-		obj->init = init;
-		obj->show_all = show_all;
-
-		obj->get_val = get_dao_val;
-		obj->set_val = set_dao_val;
+	uint8_t cmd_found = 0;
+	uint8_t cmd_status = CMD_STATUS_ERR_UNKNOW;
+	int i = 0;
+	uint32_t processor_size = sizeof(processor_list)/sizeof(struct cmd_processor_t);
+	struct cmd_processor_t* cmd_proc = NULL;
+	struct ops_log_t* log = get_log_instance();
+	for(i = 0;i < processor_size;i++) {
+		cmd_proc = &processor_list[i];
+		if((cmd_proc->fn == req->fn) && (cmd_proc->cmd == req->cmd)) {
+			cmd_found = 1;
+			break;
+		}
 	}
-	return obj;
-}
 
-void del_db_instance()
-{
-	if (obj)
-		free(obj);
+	if(cmd_found) {
+		log->debug(0x01, "%s-%s-%d:cmd[%x:%x] found\n", __FILE__, __func__, __LINE__, req->fn, req->cmd);
+		if(cmd_proc->processor)
+			cmd_status = cmd_proc->processor(req->data, res->data);
+	} else {
+		log->debug(0x01, "%s-%s-%d:cmd[%x:%x] NOT found\n", __FILE__, __func__, __LINE__, req->fn, req->cmd);
+		cmd_status = CMD_STATUS_NOT_FOUND;
+	}
+
+	res->fn = 0x80 | req->fn;
+	res->cmd = req->cmd;
+	res->status = cmd_status;
+	res->data_size = strlen(res->data);
+	res->crc32 = 0;
+	return cmd_status;
 }
+#endif

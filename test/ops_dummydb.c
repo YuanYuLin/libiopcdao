@@ -6,33 +6,33 @@ static void init(void)
 {
 }
 
-static uint8_t get_boolean(uint8_t * key)
+static uint8_t get_boolean(uint8_t* tbl, uint8_t * key)
 {
 	uint8_t val = 0;
 	return val;
 }
 
-static void set_boolean(uint8_t * key, uint8_t val)
+static void set_boolean(uint8_t* tbl, uint8_t * key, uint8_t val)
 {
 }
 
-static uint32_t get_uint32(uint8_t * key)
+static uint32_t get_uint32(uint8_t* tbl, uint8_t * key)
 {
 	uint32_t val = 0;
 	return val;
 }
 
-static void set_uint32(uint8_t * key, uint32_t val)
+static void set_uint32(uint8_t* tbl, uint8_t * key, uint32_t val)
 {
 }
 
-static uint32_t get_string(uint8_t * key, uint8_t * val)
+static uint32_t get_string(uint8_t* tbl, uint8_t * key, uint8_t * val)
 {
 	uint32_t val_len = 0;
 	return val_len;
 }
 
-static void set_string(uint8_t * key, uint8_t * val)
+static void set_string(uint8_t* tbl, uint8_t * key, uint8_t * val)
 {
 }
 
