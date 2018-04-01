@@ -17,7 +17,7 @@
 #include "ops_json.h"
 #include "ops_db.h"
 
-#define DAO_KV_MAX      128
+//#define DAO_KV_MAX      128
 
 /*
  * bit 0 ~ 3 : DAOTYPE
@@ -38,14 +38,14 @@ struct dao_hdr_t {
         uint8_t key_len;
         uint16_t val_len;
         uint32_t resv;
-};
+} __attribute__((packed));
 
 struct dao_kv_512_t {
         struct dao_hdr_t hdr;
         uint8_t data[DAOTYPE_DATALEN_500];
 };
 
-static struct dao_kv_512_t dao_kv_list[DAO_KV_MAX];
+#include "db_init.inc"
 
 static uint16_t get_dao_val(uint8_t* key, uint8_t* val)
 {
@@ -59,7 +59,7 @@ static uint16_t get_dao_val(uint8_t* key, uint8_t* val)
 			log->debug(0x01, "key: unknown\n");
 			break;
 		} else if((kv->hdr.type & 0x0F) == DAOTYPE_JSON_512) {
-			log->debug(0x01, "record used: %s\n", key);
+			//log->debug(0x01, "record used: %s\n", key);
 			if((strlen(key) == kv->hdr.key_len) && (memcmp(key, &kv->data[0], kv->hdr.key_len) == 0)) {
 				memcpy(val, &kv->data[kv->hdr.key_len], kv->hdr.val_len);
 				val_size = kv->hdr.val_len;
@@ -109,198 +109,6 @@ static uint16_t set_dao_val(uint8_t* key, uint8_t* val)
 
 static void init(void)
 {
-	int i = 0;
-	int idx = 0;
-	struct dao_kv_512_t* kv = NULL;
-	for(i=0;i<DAO_KV_MAX;i++){
-		memset(&dao_kv_list[i], 0, sizeof(struct dao_kv_512_t));
-	}
-
-	{
-#define KEY_CONFIG_VERSION "config_version"
-#define VAL_CONFIG_VERSION "{\"major\":0, \"minor\":0, \"aux\":0}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_CONFIG_VERSION);
-	kv->hdr.val_len = strlen(VAL_CONFIG_VERSION);
-	strcpy(&kv->data[0], KEY_CONFIG_VERSION);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_CONFIG_VERSION);
-	}
-#if 0
-	{
-#define KEY_CONFIGS "configs"
-#define VAL_CONFIGS "[\"netifc_count\", \"storage_count\"]"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_CONFIGS);
-	kv->hdr.val_len = strlen(VAL_CONFIGS);
-	strcpy(&kv->data[0], KEY_CONFIGS);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_CONFIGS);
-	}
-#endif
-	{
-#define KEY_NETIFC_COUNT "netifc_count"
-#define VAL_NETIFC_COUNT "[\"netifc_1\", \"netifc_2\",  \"netifc_3\", \"netifc_4\"]"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_NETIFC_COUNT);
-	kv->hdr.val_len = strlen(VAL_NETIFC_COUNT);
-	strcpy(&kv->data[0], KEY_NETIFC_COUNT);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_NETIFC_COUNT);
-	}
-	{
-#define KEY_NETIFC_1 "netifc_1"
-#define VAL_NETIFC_1 "{\"visable\":1, \"editable\":0, \"type\":\"eth\", \"name\":\"eth0\", \"vlan\":0, \"tag\":0, \"devices\":[], \"src\":\"none\"}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_NETIFC_1);
-	kv->hdr.val_len = strlen(VAL_NETIFC_1);
-	strcpy(&kv->data[0], KEY_NETIFC_1);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_NETIFC_1);
-	}
-	{
-#define KEY_NETIFC_2 "netifc_2"
-#define VAL_NETIFC_2 "{\"visable\":1, \"editable\":0, \"type\":\"eth\", \"name\":\"eth0\", \"vlan\":1, \"tag\":100, \"devices\":[], \"src\":\"none\"}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_NETIFC_2);
-	kv->hdr.val_len = strlen(VAL_NETIFC_2);
-	strcpy(&kv->data[0], KEY_NETIFC_2);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_NETIFC_2);
-	}
-	{
-#define KEY_NETIFC_3 "netifc_3"
-#define VAL_NETIFC_3 "{\"visable\":1, \"editable\":1, \"type\":\"bridge\", \"name\":\"br0\", \"vlan\":0, \"tag\":0, \"devices\":[\"eth0\"], \"src\":\"dhcp\"}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_NETIFC_3);
-	kv->hdr.val_len = strlen(VAL_NETIFC_3);
-	strcpy(&kv->data[0], KEY_NETIFC_3);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_NETIFC_3);
-	}
-	{
-#define KEY_NETIFC_4 "netifc_4"
-#define VAL_NETIFC_4 "{\"visable\":1, \"editable\":1, \"type\":\"bridge\", \"name\":\"br1\", \"vlan\":0, \"tag\":0, \"devices\":[\"eth0.100\"], \"src\":\"storage\", \"net_cfg_json\":\"/hdd/sys/extra_cfg.json\", \"ctrlport\":1}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_NETIFC_4);
-	kv->hdr.val_len = strlen(VAL_NETIFC_4);
-	strcpy(&kv->data[0], KEY_NETIFC_4);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_NETIFC_4);
-	}
-	{
-#define KEY_STORAGE_COUNT "storage_count"
-#define VAL_STORAGE_COUNT "[\"storage_1\"]"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_STORAGE_COUNT);
-	kv->hdr.val_len = strlen(VAL_STORAGE_COUNT);
-	strcpy(&kv->data[0], KEY_STORAGE_COUNT);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_STORAGE_COUNT);
-	}
-	{
-#define KEY_STORAGE_1 "storage_1"
-#define VAL_STORAGE_1 "{\"device\":\"/dev/sda\", \"start\":0, \"end\":262143, \"sector_size\":512, \"media_type\":\"hdd\", \"partitions\":[\"sda_part_1\", \"sda_part_2\", \"sda_part_3\", \"sda_part_4\"]}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_STORAGE_1);
-	kv->hdr.val_len = strlen(VAL_STORAGE_1);
-	strcpy(&kv->data[0], KEY_STORAGE_1);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_STORAGE_1);
-	}
-	{
-#define KEY_SDA_PART_1 "sda_part_1"
-#define VAL_SDA_PART_1 "{\"visable\":1, \"formatable\":0, \"type\":\"fat\", \"src\":\"/dev/sda1\", \"dst\":\"/hdd/sys\", \"label\":\"system\", \"start\":2048, \"sectors\":102400}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_SDA_PART_1);
-	kv->hdr.val_len = strlen(VAL_SDA_PART_1);
-	strcpy(&kv->data[0], KEY_SDA_PART_1);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_SDA_PART_1);
-	}
-	{
-#define KEY_SDA_PART_2 "sda_part_2"
-#define VAL_SDA_PART_2 "{\"visable\":0, \"formatable\":0, \"type\":\"sysdao\", \"src\":\"\", \"dst\":\"\", \"label\":\"sysdao1\", \"start\":104448, \"sectors\":10240}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_SDA_PART_2);
-	kv->hdr.val_len = strlen(VAL_SDA_PART_2);
-	strcpy(&kv->data[0], KEY_SDA_PART_2);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_SDA_PART_2);
-	}
-	{
-#define KEY_SDA_PART_3 "sda_part_3"
-#define VAL_SDA_PART_3 "{\"visable\":0, \"formatable\":0, \"type\":\"sysdao\", \"src\":\"\", \"dst\":\"\", \"label\":\"sysdao2\", \"start\":114688, \"sectors\":10240}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_SDA_PART_3);
-	kv->hdr.val_len = strlen(VAL_SDA_PART_3);
-	strcpy(&kv->data[0], KEY_SDA_PART_3);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_SDA_PART_3);
-	}
-	{
-#define KEY_SDA_PART_4 "sda_part_4"
-#define VAL_SDA_PART_4 "{\"visable\":1, \"formatable\":0, \"type\":\"fat\", \"src\":\"/dev/sda2\", \"dst\":\"/hdd/data\", \"label\":\"data\", \"start\":124928, \"sectors\":262143}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_SDA_PART_4);
-	kv->hdr.val_len = strlen(VAL_SDA_PART_4);
-	strcpy(&kv->data[0], KEY_SDA_PART_4);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_SDA_PART_4);
-	}
-	{
-#define KEY_HOSTNAME "hostname_cfg"
-#define VAL_HOSTNAME "{\"src\":\"storage\", \"hostname_cfg_json\":\"/hdd/sys/extra_cfg.json\"}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_HOSTNAME);
-	kv->hdr.val_len = strlen(VAL_HOSTNAME);
-	strcpy(&kv->data[0], KEY_HOSTNAME);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_HOSTNAME);
-	}
-	{
-#define KEY_DRBD "drbd_cfg"
-/*
-#define VAL_DRBD "{\"enabled\":0, \"ipaddress_local\":\"\", \"macaddress_local\":\"\", \"hostname_local\":\"qemu1\", \"drbd_local\":\"/dev/drbd0\", \"disk_local\":\"/dev/sdb\", \"hostname_remote\":\"qemu2\", \"drbd_remote\":\"/dev/drbd0\", \"disk_remote\":\"/dev/sdb\", \"ipaddress_remote\":\"\", \"macaddress_remote\":\"\"}"
-*/
-#define VAL_DRBD "{\"ipaddress_local\":\"\", \"macaddress_local\":\"\", \"hostname_local\":\"qemu1\", \"drbd_local\":\"/dev/drbd0\", \"disk_local\":\"/dev/sdb\", \"hostname_remote\":\"qemu2\", \"drbd_remote\":\"/dev/drbd0\", \"disk_remote\":\"/dev/sdb\", \"ipaddress_remote\":\"\", \"macaddress_remote\":\"\"}"
-	kv = &dao_kv_list[idx++];
-	kv->hdr.chksum = 0;
-	kv->hdr.type |= DAOTYPE_JSON_512;
-	kv->hdr.resv = 0;
-	kv->hdr.key_len = strlen(KEY_DRBD);
-	kv->hdr.val_len = strlen(VAL_DRBD);
-	strcpy(&kv->data[0], KEY_DRBD);
-	strcpy(&kv->data[kv->hdr.key_len], VAL_DRBD);
-	}
 }
 
 static void show_all(void)

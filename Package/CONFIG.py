@@ -46,6 +46,8 @@ def MAIN_BUILD(args):
     #extra_conf = []
     #extra_conf.append("CROSS_COMPILE=" + crosscc)
     #iopc.make(output_dir, extra_conf)
+    CMD=['python', 'db_init.py']
+    ops.execCmd(CMD, output_dir, False)
     iopc.make(output_dir)
 
     return False
