@@ -11,7 +11,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <syslog.h>
+#include <stdlib.h>
 
+#include "zlib.h"
 #include "ops_misc.h"
 #include "ops_log.h"
 #include "ops_json.h"
@@ -107,8 +109,75 @@ static uint16_t set_dao_val(uint8_t* key, uint8_t* val)
 	return val_size;
 }
 
+struct part_t {
+	uint8_t tag[12];
+	uint8_t name[10];
+	uint8_t fstype[10];
+	int64_t start;
+	int64_t end;
+	uint8_t boot;
+};
+
 static void init(void)
 {
+	uint8_t buff[64];
+	struct part_t* part;
+	struct ops_log_t* log = get_log_instance();
+	uint8_t* boot_dev = getenv("BOOT_DEV");
+	int fd = -1;
+	uint8_t rc = 0;
+	uint64_t off_start = (1*1024*1024);
+	uint64_t off_end = 0;
+	uint8_t iopcfsdao_found = 0;
+	int count = 0;
+	//uint32_t crc32_1 = 0;
+	//uint32_t crc32_2 = 0;
+	fd = open(boot_dev, O_RDONLY);
+	lseek(fd, off_start, SEEK_SET);
+	log->debug(0x01, "%s - offset to %d\n", boot_dev, off_start);
+	for(;;) {
+		if(count > 1024) {
+			break;
+		}
+#define IOPCHEAD	"$[IOPCHEAD]$"
+#define IOPCEND		"$[IOPCEND]$"
+#define IOPCREC		"$[IOPCREC]$"
+#define IOPCFSDAO	"iopcdao"
+		rc = read(fd, &buff, sizeof(buff));
+		log->debug(0x01, "%d-read count %d\n", count, rc);
+
+		if(memcmp(buff, IOPCHEAD, strlen(IOPCHEAD)) == 0) {
+			log->debug(0x01, "IOPCHEAD\n");
+		}
+		if(memcmp(buff, IOPCEND, strlen(IOPCEND)) == 0) {
+			log->debug(0x01, "IOPCEND\n");
+			break;
+		}
+		if(memcmp(buff, IOPCREC, strlen(IOPCREC)) == 0) {
+			log->debug(0x01, "IOPCREC\n");
+			part = (struct part_t*)&buff;
+			if(memcmp(part->fstype, IOPCFSDAO, strlen(IOPCFSDAO)) == 0) {
+				off_start = part->start;
+				off_end = part->end;
+				iopcfsdao_found = 1;
+				log->debug(0x01, "DAO start:%ld, end:%ld\n", off_start, off_end);
+				break;
+			}
+		}
+		count++;
+	}
+	close(fd);
+	if(iopcfsdao_found) {
+		fd = open(boot_dev, O_RDONLY);
+		lseek(fd, off_start, SEEK_SET);
+		rc = read(fd, &dao_kv_list, sizeof(dao_kv_list));
+		/*
+		crc32_1 = dao_kv.chksum;
+		dao_kv.chksum = 0;
+		crc32_2 = crc32(0, &dao_kv, sizeof(struct dao_kv_512_t));
+		*/
+		close(fd);
+	}
 }
 
 static void show_all(void)

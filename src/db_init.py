@@ -3,6 +3,10 @@
 import struct
 import pprint
 
+'''
+[Boot disk layout]
+'''
+
 def create_buffer(record_count, record_size):
     buff=[]
     for idx in range(0, record_count):
@@ -35,6 +39,8 @@ def dao_to_buffer(dao, buff, record_format, data_size):
     return buff
 
 def out_to_binary(buff):
+    #create_buffer(1, (64 * 1024))
+    #struct.pack("12sH50s", "$[IOPC_DATA]", record_count, bytearray('\0' * 50))
     fd=open('db_init.bin', 'wb')
     for rec in buff:
         fd.write(rec)
@@ -48,18 +54,24 @@ def out_to_c(buff, record_count, record_format):
     for rec in buff:
         csum, tp, kl, vl, rsv, data = struct.unpack(record_format, rec)
         ft.write('\n' + '{')
-        ft.write(str(int(csum)))
+        #ft.write(str(int(csum)))
+        ft.write(str(int(0)))
         ft.write(',')
-        ft.write(str(int(tp)))
+        #ft.write(str(int(tp)))
+        ft.write(str(int(0)))
         ft.write(',')
-        ft.write(str(int(kl)))
+        #ft.write(str(int(kl)))
+        ft.write(str(int(0)))
         ft.write(',')
-        ft.write(str(int(vl)))
+        #ft.write(str(int(vl)))
+        ft.write(str(int(0)))
         ft.write(',')
-        ft.write(str(int(rsv)))
+        #ft.write(str(int(rsv)))
+        ft.write(str(int(0)))
         ft.write(',{')
         for ch in bytearray(data):
-            ft.write(str(int(ch)))
+            #ft.write(str(int(ch)))
+            ft.write(str(int(0)))
             ft.write(',')
         ft.write('},')
         ft.write('},')
@@ -87,24 +99,24 @@ if __name__ == '__main__':
 "storage_1":
     '{"device":"/dev/sda", "start":0, "end":262143, "sector_size":512, "media_type":"hdd", "partitions":["sda_part_1", "sda_part_2", "sda_part_3", "sda_part_4"]}',
 "sda_part_1":
-    '{"visable":1, "formatable":0, "type":"fat", "src":"/dev/sda1", "dst":"/hdd/sys", "label":"system", "start":2048, "sectors":102400}',
+    '{"visable":1, "formatable":0, "type":"fat", "src":"/dev/sda1", "dst":"/hdd/sys", "label":"system" }',
 "sda_part_2":
-    '{"visable":0, "formatable":0, "type":"sysdao", "src":"", "dst":"", "label":"sysdao1", "start":104448, "sectors":10240}',
+    '{"visable":0, "formatable":0, "type":"sysdao", "src":"", "dst":"", "label":"sysdao1" }',
 "sda_part_3":
-    '{"visable":0, "formatable":0, "type":"sysdao", "src":"", "dst":"", "label":"sysdao2", "start":114688, "sectors":10240}',
+    '{"visable":0, "formatable":0, "type":"sysdao", "src":"", "dst":"", "label":"sysdao2"}',
 "sda_part_4":
-    '{"visable":1, "formatable":0, "type":"fat", "src":"/dev/sda2", "dst":"/hdd/data", "label":"data", "start":124928, "sectors":262143}',
+    '{"visable":1, "formatable":0, "type":"fat", "src":"/dev/sda2", "dst":"/hdd/data", "label":"data" }',
 
 "lxc_count":
     '["lxc_1", "lxc_2", "lxc_3", "lxc_4"]',
 "lxc_1":
-    '{"name":"vm001", "rootfs":"/vms/vm001/rootfs", "fstab":"/vms/vm001/rootfs/fstab", "nettype":"veth", "nethwlink":"br1", "nethwaddr":"", "ipaddress":"", "gateway":""}',
+    '{"name":"vm001", "rootfs":"/var/lib/lxc/vm001/rootfs", "fstab":"/var/lib/lxc/vm001/rootfs/fstab", "nettype":"veth", "nethwlink":"br1", "nethwaddr":"", "ipaddress":"", "gateway":""}',
 "lxc_2":
-    '{"name":"vm002", "rootfs":"/vms/vm002/rootfs", "fstab":"/vms/vm002/rootfs/fstab", "nettype":"veth", "nethwlink":"br1", "nethwaddr":"", "ipaddress":"", "gateway":""}',
+    '{"name":"vm002", "rootfs":"/var/lib/lxc/vm002/rootfs", "fstab":"/var/lib/lxc/vm002/rootfs/fstab", "nettype":"veth", "nethwlink":"br1", "nethwaddr":"", "ipaddress":"", "gateway":""}',
 "lxc_3":
-    '{"name":"vm003", "rootfs":"/vms/vm003/rootfs", "fstab":"/vms/vm003/rootfs/fstab", "nettype":"veth", "nethwlink":"br1", "nethwaddr":"", "ipaddress":"", "gateway":""}',
+    '{"name":"vm003", "rootfs":"/var/lib/lxc/vm003/rootfs", "fstab":"/var/lib/lxc/vm003/rootfs/fstab", "nettype":"veth", "nethwlink":"br1", "nethwaddr":"", "ipaddress":"", "gateway":""}',
 "lxc_4":
-    '{"name":"vm004", "rootfs":"/vms/vm004/rootfs", "fstab":"/vms/vm004/rootfs/fstab", "nettype":"veth", "nethwlink":"br1", "nethwaddr":"", "ipaddress":"", "gateway":""}',
+    '{"name":"vm004", "rootfs":"/var/lib/lxc/vm004/rootfs", "fstab":"/var/lib/lxc/vm004/rootfs/fstab", "nettype":"veth", "nethwlink":"br1", "nethwaddr":"", "ipaddress":"", "gateway":""}',
 
 "hostname_cfg":
     '{"src":"storage", "hostname_cfg_json":"/hdd/sys/extra_cfg.json"}',

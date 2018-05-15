@@ -46,8 +46,8 @@ def MAIN_BUILD(args):
     #extra_conf = []
     #extra_conf.append("CROSS_COMPILE=" + crosscc)
     #iopc.make(output_dir, extra_conf)
-    CMD=['python', 'db_init.py']
-    ops.execCmd(CMD, output_dir, False)
+    #CMD=['python', 'db_init.py']
+    #ops.execCmd(CMD, output_dir, False)
     iopc.make(output_dir)
 
     return False
@@ -57,6 +57,7 @@ def MAIN_INSTALL(args):
 
     iopc.installBin(args["pkg_name"], ops.path_join(output_dir, "include/."), dst_include_dir)
     iopc.installBin(args["pkg_name"], ops.path_join(output_dir, "libiopcdao.so"), "lib")
+    #ops.copyto(ops.path_join(output_dir, 'db_init.bin'), iopc.getOutputRootDir())
 
     return False
 
