@@ -146,8 +146,8 @@ static void init(void)
 		rc = read(fd, &buff, sizeof(buff));
 		log->debug(0x01, "%d-read count %d\n", count, rc);
 
-		if(memcmp(buff, IOPCHEAD, strlen(IOPCHEAD)) == 0) {
-			log->debug(0x01, "IOPCHEAD\n");
+		if(memcmp(buff, IOPCHEAD, strlen(IOPCHEAD)) != 0) {
+			log->debug(0x01, "IOPCHEAD NOT found\n");
 		}
 		if(memcmp(buff, IOPCEND, strlen(IOPCEND)) == 0) {
 			log->debug(0x01, "IOPCEND\n");
