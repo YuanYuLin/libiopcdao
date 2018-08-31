@@ -120,6 +120,7 @@ struct part_t {
 
 static void init(void)
 {
+#if 0
 	uint8_t buff[64];
 	struct part_t* part;
 	struct ops_log_t* log = get_log_instance();
@@ -178,6 +179,14 @@ static void init(void)
 		*/
 		close(fd);
 	}
+#else
+	int fd = open("/default/etc/db_init.bin", O_RDONLY);
+	if(fd < 0) {
+		return;
+	}
+	read(fd, &dao_kv_list, sizeof(dao_kv_list));
+	close(fd);
+#endif
 }
 
 static void show_all(void)
