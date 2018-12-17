@@ -180,7 +180,15 @@ static void init(void)
 		close(fd);
 	}
 #else
-	int fd = open("/default/etc/db_init.bin", O_RDONLY);
+	uint8_t* platform = getenv("PLATFORM");
+	uint8_t dao_path[100] = {0};
+	memset(dao_path, 0, sizeof(dao_path));
+	if(platform) {
+		sprintf(dao_path, "/lib/iopcdao/dao.%s.bin", platform);
+	} else {
+		sprintf(dao_path, "/lib/iopcdao/dao.bin");
+	}
+	int fd = open(dao_path, O_RDONLY);
 	if(fd < 0) {
 		return;
 	}
