@@ -38,6 +38,8 @@ struct ops_db_t {
 //	uint8_t (*process)(struct msg_t* req, struct msg_t* res);
 	uint16_t (*get_val)(uint8_t* key, uint8_t* val);
 	uint16_t (*set_val)(uint8_t* key, uint8_t* val);
+	void (*save_iopc_storage)();
+	void (*reset_iopc_storage)();
 };
 
 #define KV_KEY		"#dbk#"
